@@ -1,0 +1,40 @@
+# WoW client-generated files
+WTF/
+Cache/
+Logs/
+Screenshots/
+CrashLogs/
+Interface/FrameXML/
+Interface/GlueXML/
+
+# Packaging / release artifacts
+*.zip
+*.tar.gz
+.release/
+.pkgmeta
+
+# Backup files created by editors and WoW itself
+*.bak
+*.orig
+*~
+*.swp
+*.swo
+
+# OS noise
+Thumbs.db
+desktop.ini
+.DS_Store
+ehthumbs.db
+
+# Claude Code local settings
+.claude/
+
+# Editor project folders
+.vscode/
+.idea/
+*.sublime-project
+*.sublime-workspace
+
+# luacheck / linting
+.luacheckrc.user
+luac.out
