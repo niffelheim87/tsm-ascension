@@ -51,6 +51,7 @@ This fork patches the Shopping module's search callback so that every individual
 - The market value calculation is identical to a full scan — same `CalculateMarketValue` percentile algorithm, same `scans[day]` running-average merge.
 - Records are captured **before** the max-price display filter runs, so the price data includes the full market picture, not just the auctions below your shopping cap.
 - The update path is guarded so it fails silently if AuctionDB is not loaded.
+- Each search also records the **unique seller count** and **total quantity** seen, which are displayed in the item tooltip.
 
 ---
 
@@ -112,7 +113,22 @@ Pull the latest changes and re-copy the addon folders, then `/reload` in-game.
 
 ### Checking price freshness
 
-Hover over any item with a TSM tooltip. The **TSM AuctionDB** line shows how many auctions were seen and how long ago the last scan was. Green = under 3 hours, yellow = under 12 hours, red = older.
+Hover over any item with a TSM tooltip. The **TSM AuctionDB** section shows:
+
+```
+TSM AuctionDB:       12 auctions / 4 sellers (19hr ago)
+  Market Value:      30s
+  Min Buyout:        7s  (76% below market)
+  Total quantity:    40 units
+  AH Deposit (12h):  4c   Profit: 6s 96c
+  AH Deposit (24h):  8c   Profit: 6s 92c
+  AH Deposit (48h):  17c  Profit: 6s 83c
+```
+
+- **Header** — auction count, unique seller count, and time since last scan. Color-coded: green = under 3 hours, yellow = under 12 hours, red = older.
+- **Min Buyout** — annotated with how far it sits below (green) or above (red) the 14-day market value.
+- **Total quantity** — total stack units seen across all auctions in the last search.
+- **AH Deposit / Profit** — deposit cost for each auction duration (15%/30%/60% of vendor sell price, minimum 1c), and estimated profit using `DBMinBuyout` as the primary price (falls back to `DBMarket`; shows N/A when neither is available). Only shown for items that have a vendor sell price.
 
 ### Price sources available
 
