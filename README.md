@@ -120,15 +120,21 @@ TSM AuctionDB:       12 auctions / 4 sellers (19hr ago)
   Market Value:      30s
   Min Buyout:        7s  (76% below market)
   Total quantity:    40 units
-  AH Deposit (12h):  4c   Profit: 6s 96c
-  AH Deposit (24h):  8c   Profit: 6s 92c
-  AH Deposit (48h):  17c  Profit: 6s 83c
+  Market tier:       Scarce
+  AH Deposit (12h):  4c   Profit: 20s 96c
+  AH Deposit (24h):  8c   Profit: 20s 92c
+  AH Deposit (48h):  17c  Profit: 20s 83c
+  [!] SNIPE - 76% below market
+  Resell profit:     20s 83c (69%)
+  Vendor profit:     loss
 ```
 
 - **Header** — auction count, unique seller count, and time since last scan. Color-coded: green = under 3 hours, yellow = under 12 hours, red = older.
 - **Min Buyout** — annotated with how far it sits below (green) or above (red) the 14-day market value.
 - **Total quantity** — total stack units seen across all auctions in the last search.
-- **AH Deposit / Profit** — deposit cost for each auction duration (15%/30%/60% of vendor sell price, minimum 1c), and estimated profit using `DBMinBuyout` as the primary price (falls back to `DBMarket`; shows N/A when neither is available). Only shown for items that have a vendor sell price.
+- **Market tier** — Scarce (< 50 units, green) / Medium (< 500, yellow) / Saturated (≥ 500, red). Drives SNIPE thresholds.
+- **AH Deposit / Profit** — deposit cost for each auction duration (15%/30%/60% of vendor sell price, minimum 1c). Profit = `floor(DBMarket × 0.95) − minBuyout − deposit` (accounts for the 5% AH fee). Shows N/A when either price is missing. Only shown for items with a vendor sell price.
+- **SNIPE alert** — shown when `minBuyout` is far enough below `DBMarket` for the item's tier (Scarce: < 60% market and profit > 40%; Medium: < 70% and > 25%; Saturated: < 75% and > 15%). Displays how far below market, resell profit with %, and vendor profit. The better of resell/vendor is highlighted green; the worse is gray. When no snipe is detected, a plain ranked comparison of the two profit lines is shown instead.
 
 ### Price sources available
 

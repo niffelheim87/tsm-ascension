@@ -291,10 +291,19 @@ function TSM:GetTooltip(itemString, quantity)
 		end
 	end
 
-	-- add total quantity info
-	local totalQty = TSM.data[itemID] and TSM.data[itemID].quantity
-	if totalQty and totalQty > 0 then
+	-- add total quantity and market tier
+	local totalQty = TSM.data[itemID] and TSM.data[itemID].quantity or 0
+	if totalQty > 0 then
 		tinsert(text, { left = "  Total quantity:", right = "|cffffffff" .. totalQty .. " units|r" })
+		local tierLabel
+		if totalQty < 50 then
+			tierLabel = "|cff00ff00Scarce|r"
+		elseif totalQty < 500 then
+			tierLabel = "|cffffff00Medium|r"
+		else
+			tierLabel = "|cffff0000Saturated|r"
+		end
+		tinsert(text, { left = "  Market tier:", right = tierLabel })
 	end
 
 
@@ -306,20 +315,60 @@ function TSM:GetTooltip(itemString, quantity)
 		local deposit12h = max(1, floor(vendorSellPrice * 0.15))
 		local deposit24h = max(1, floor(vendorSellPrice * 0.30))
 		local deposit48h = max(1, floor(vendorSellPrice * 0.60))
+		local saleValue = (marketValue and marketValue > 0) and floor(marketValue * 0.95) or nil
 		local function depositLine(duration, deposit)
 			local depositStr = TSMAPI:FormatTextMoney(deposit, "|cffffffff", true)
 			local profitStr
-			local priceForProfit = (minBuyout and minBuyout > 0) and minBuyout or marketValue
-			if not priceForProfit or priceForProfit == 0 then
+			if not saleValue or not minBuyout or minBuyout == 0 then
 				profitStr = "|cffffffffN/A|r"
 			else
-				profitStr = TSMAPI:FormatTextMoney(priceForProfit - deposit, "|cffffffff", true)
+				profitStr = TSMAPI:FormatTextMoney(saleValue - minBuyout - deposit, "|cffffffff", true)
 			end
 			tinsert(text, { left = "  AH Deposit (" .. duration .. "):", right = depositStr .. "  Profit: " .. profitStr })
 		end
 		depositLine("12h", deposit12h)
 		depositLine("24h", deposit24h)
 		depositLine("48h", deposit48h)
+		if minBuyout and minBuyout > 0 and marketValue and marketValue > 0 then
+			local resellProfit = saleValue - minBuyout - deposit48h
+			local profitPct = resellProfit / marketValue * 100
+			local vendorProfit = vendorSellPrice - minBuyout
+			local qty = TSM.data[itemID] and TSM.data[itemID].quantity or 0
+			local snipeTriggered = false
+			if qty < 50 then
+				snipeTriggered = minBuyout < marketValue * 0.60 and profitPct > 40
+			elseif qty < 500 then
+				snipeTriggered = minBuyout < marketValue * 0.70 and profitPct > 25
+			else
+				snipeTriggered = minBuyout < marketValue * 0.75 and profitPct > 15
+			end
+			if snipeTriggered then
+				local belowPct = floor((1 - minBuyout / marketValue) * 100)
+				tinsert(text, { left = "|cffff9900[!] SNIPE - " .. belowPct .. "% below market|r", right = "" })
+				local resellColor = resellProfit > vendorProfit and "|cff00ff00" or "|cff999999"
+				tinsert(text, { left = "  Resell profit:", right = TSMAPI:FormatTextMoney(resellProfit, resellColor, true) .. " (" .. floor(profitPct) .. "%)" })
+				local vendorStr
+				if vendorProfit < 0 then
+					vendorStr = "|cffff0000loss|r"
+				else
+					local vendorColor = vendorProfit > resellProfit and "|cff00ff00" or "|cff999999"
+					vendorStr = TSMAPI:FormatTextMoney(vendorProfit, vendorColor, true)
+				end
+				tinsert(text, { left = "  Vendor profit:", right = vendorStr })
+			else
+				local vendorStr
+				if vendorProfit < 0 then
+					vendorStr = "|cffff0000loss|r"
+				end
+				if vendorProfit > resellProfit then
+					tinsert(text, { left = "  Vendor profit:", right = vendorStr or TSMAPI:FormatTextMoney(vendorProfit, "|cff00ff00", true) })
+					tinsert(text, { left = "  Resell profit:", right = TSMAPI:FormatTextMoney(resellProfit, "|cff999999", true) })
+				else
+					tinsert(text, { left = "  Resell profit:", right = TSMAPI:FormatTextMoney(resellProfit, "|cff00ff00", true) })
+					tinsert(text, { left = "  Vendor profit:", right = vendorStr or TSMAPI:FormatTextMoney(vendorProfit, "|cff999999", true) })
+				end
+			end
+		end
 	end
 	-- add heading and last scan time info
 	if #text > 0 then

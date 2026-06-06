@@ -100,3 +100,11 @@ Shopping search result received
 
 **`TradeSkillMaster_Shopping/modules/Search.lua`**
 - Extended the `ScanCallback` record loop to count unique sellers via `record.seller` (field confirmed in `LibAuctionScan-1.0/AuctionItem.lua`). Passes `sellerCount` as the 5th argument to `TSMAPI.AuctionDB.UpdateFromSearchResults`.
+
+### 2026-06-07
+
+**`TradeSkillMaster_AuctionDB/TradeSkillMaster_AuctionDB.lua`**
+- Added "Market tier:" line immediately after "Total quantity:", colour-coded by quantity: Scarce (`< 50`, green), Medium (`< 500`, yellow), Saturated (`>= 500`, red).
+- Replaced vendor/resell comparison block with a tier-aware SNIPE alert system. When `minBuyout` is far enough below `DBMarket` for the item's market depth tier (Scarce: `< 60% market` and `profitPct > 40`; Medium: `< 70%` and `> 25`; Saturated: `< 75%` and `> 15`), a highlighted `[!] SNIPE - XX% below market` header appears followed by Resell profit (with percentage) and Vendor profit. When no snipe is detected, the existing green/gray ranked comparison is shown instead.
+- Fixed deposit profit formula throughout: profit is now `saleValue - minBuyout - deposit` where `saleValue = floor(DBMarket * 0.95)` (accounts for the 5% AH transaction fee applied to the sale). The old formula used raw `MinBuyout` as the sale reference.
+- SNIPE/profit block now requires both `minBuyout > 0` and `marketValue > 0`; deposit profit lines show N/A when either is missing.
