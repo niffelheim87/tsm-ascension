@@ -671,7 +671,7 @@ end
 -- Updates AuctionDB price data from an individual Shopping search result.
 -- Called cross-addon via TSMAPI.AuctionDB.UpdateFromSearchResults.
 -- compactRecords: {{stack_size, buyout_per_item}, ...}
-function Data:UpdateFromSearchResults(itemID, compactRecords, minBuyout, totalQuantity)
+function Data:UpdateFromSearchResults(itemID, compactRecords, minBuyout, totalQuantity, sellerCount)
 	if not itemID or not compactRecords or #compactRecords == 0 then return end
 
 	local marketValue = Data:CalculateMarketValue({records=compactRecords, quantity=totalQuantity})
@@ -700,11 +700,12 @@ function Data:UpdateFromSearchResults(itemID, compactRecords, minBuyout, totalQu
 		itemData.minBuyout = minBuyout
 	end
 	itemData.quantity = totalQuantity
+	itemData.sellerCount = sellerCount or 0
 	Data:UpdateMarketValue(itemData)
 	TSM:EncodeItemData(itemID)
 end
 
 TSMAPI.AuctionDB = TSMAPI.AuctionDB or {}
-TSMAPI.AuctionDB.UpdateFromSearchResults = function(itemID, compactRecords, minBuyout, totalQuantity)
-	Data:UpdateFromSearchResults(itemID, compactRecords, minBuyout, totalQuantity)
+TSMAPI.AuctionDB.UpdateFromSearchResults = function(itemID, compactRecords, minBuyout, totalQuantity, sellerCount)
+	Data:UpdateFromSearchResults(itemID, compactRecords, minBuyout, totalQuantity, sellerCount)
 end

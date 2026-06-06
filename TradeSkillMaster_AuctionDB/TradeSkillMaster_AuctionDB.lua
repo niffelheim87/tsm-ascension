@@ -263,22 +263,38 @@ function TSM:GetTooltip(itemString, quantity)
 	if TSM.db.profile.minBuyoutTooltip then
 		local minBuyout = TSM:GetMinBuyout(itemID)
 		if minBuyout then
+			local marketValue = TSM:GetMarketValue(itemID)
+			local pctStr = ""
+			if marketValue and marketValue > 0 and minBuyout ~= marketValue then
+				local pct = math.floor(math.abs(1 - minBuyout / marketValue) * 100)
+				if minBuyout < marketValue then
+					pctStr = " |cff00ff00(" .. pct .. "% below market)|r"
+				else
+					pctStr = " |cffff4444(" .. pct .. "% above market)|r"
+				end
+			end
 			if quantity then
 				if moneyCoinsTooltip then
 					if IsShiftKeyDown() then
-						tinsert(text, { left = "  " .. format(L["Min Buyout x%s:"], quantity), right = TSMAPI:FormatTextMoneyIcon(minBuyout * quantity, "|cffffffff", true) })
+						tinsert(text, { left = "  " .. format(L["Min Buyout x%s:"], quantity), right = TSMAPI:FormatTextMoneyIcon(minBuyout * quantity, "|cffffffff", true) .. pctStr })
 					else
-						tinsert(text, { left = "  " .. L["Min Buyout:"], right = TSMAPI:FormatTextMoneyIcon(minBuyout, "|cffffffff", true) })
+						tinsert(text, { left = "  " .. L["Min Buyout:"], right = TSMAPI:FormatTextMoneyIcon(minBuyout, "|cffffffff", true) .. pctStr })
 					end
 				else
 					if IsShiftKeyDown() then
-						tinsert(text, { left = "  " .. format(L["Min Buyout x%s:"], quantity), right = TSMAPI:FormatTextMoney(minBuyout * quantity, "|cffffffff", true) })
+						tinsert(text, { left = "  " .. format(L["Min Buyout x%s:"], quantity), right = TSMAPI:FormatTextMoney(minBuyout * quantity, "|cffffffff", true) .. pctStr })
 					else
-						tinsert(text, { left = "  " .. L["Min Buyout:"], right = TSMAPI:FormatTextMoney(minBuyout, "|cffffffff", true) })
+						tinsert(text, { left = "  " .. L["Min Buyout:"], right = TSMAPI:FormatTextMoney(minBuyout, "|cffffffff", true) .. pctStr })
 					end
 				end
 			end
 		end
+	end
+
+	-- add total quantity info
+	local totalQty = TSM.data[itemID] and TSM.data[itemID].quantity
+	if totalQty and totalQty > 0 then
+		tinsert(text, { left = "  Total quantity:", right = "|cffffffff" .. totalQty .. " units|r" })
 	end
 
 
@@ -317,7 +333,7 @@ function TSM:GetTooltip(itemString, quantity)
 			end
 			local timeDiff = SecondsToTime(time() - lastScan)		
 			--tinsert(text, 1, { left = "|cffffff00" .. "TSM AuctionDB:", right = "|cffffffff" .. format(L["%s ago"], timeDiff) })
-			tinsert(text, 1, { left = "|cffffff00" .. "TSM AuctionDB:", right = format("%s (%s)", format("|cffffffff".."%d auctions".."|r", TSM.data[itemID].quantity), format(timeColor..L["%s ago"].."|r", timeDiff)) })
+			tinsert(text, 1, { left = "|cffffff00" .. "TSM AuctionDB:", right = format("%s (%s)", format("|cffffffff".."%d auctions / %d sellers".."|r", TSM.data[itemID].quantity, TSM.data[itemID].sellerCount or 0), format(timeColor..L["%s ago"].."|r", timeDiff)) })
 		else
 			tinsert(text, 1, { left = "|cffffff00" .. "TSM AuctionDB:", right = "|cffffffff" .. L["Not Scanned"] })
 		end

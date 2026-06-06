@@ -309,6 +309,7 @@ local function ScanCallback(event, ...)
 			local itemID = TSMAPI:GetItemID(itemString)
 			if itemID then
 				local compactRecords, minBuyout, totalQuantity = {}, nil, 0
+				local sellers = {}
 				for _, record in ipairs(auctionItem.records) do
 					local itemBuyout = record:GetItemBuyout()
 					if itemBuyout then
@@ -318,9 +319,14 @@ local function ScanCallback(event, ...)
 						end
 					end
 					totalQuantity = totalQuantity + record.count
+					if record.seller and record.seller ~= "" then
+						sellers[record.seller] = true
+					end
 				end
+				local sellerCount = 0
+				for _ in pairs(sellers) do sellerCount = sellerCount + 1 end
 				if #compactRecords > 0 then
-					TSMAPI.AuctionDB.UpdateFromSearchResults(itemID, compactRecords, minBuyout, totalQuantity)
+					TSMAPI.AuctionDB.UpdateFromSearchResults(itemID, compactRecords, minBuyout, totalQuantity, sellerCount)
 				end
 			end
 		end

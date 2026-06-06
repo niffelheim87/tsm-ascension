@@ -35,7 +35,7 @@ Each AddOn is a self-contained directory loaded by the WoW client. They share a 
 ### Key Files for the Main Goal
 
 **AuctionDB price storage** (`TradeSkillMaster_AuctionDB/Modules/data.lua`):
-- `TSM.data[itemID]` — holds `{scans={}, lastScan=0, marketValue=X, minBuyout=Y}`
+- `TSM.data[itemID]` — holds `{scans={}, lastScan=0, marketValue=X, minBuyout=Y, quantity=N, sellerCount=N}`
 - `TSM.data:SetData(itemID, minBuyout, quantity)` — records a new scan data point
 - `TSM.data:UpdateMarketValue(itemID)` — recalculates `DBMarket` using a 14-day weighted average
 - SavedVariable key: `AscensionTSM_AuctionDB`
@@ -55,10 +55,11 @@ Each AddOn is a self-contained directory loaded by the WoW client. They share a 
 ```
 Shopping search result received
   → ScanCallback("process") in Search.lua
-  → extract compact records from auctionItem.records (before FilterRecords)
-  → TSMAPI.AuctionDB.UpdateFromSearchResults(itemID, records, minBuyout, qty)
+  → extract compact records + count unique sellers from auctionItem.records (before FilterRecords)
+  → TSMAPI.AuctionDB.UpdateFromSearchResults(itemID, records, minBuyout, qty, sellerCount)
       → Data:CalculateMarketValue (same percentile algorithm as full scan)
       → merge into scans[today] running average
+      → stores quantity, sellerCount on itemData
       → Data:UpdateMarketValue → 14-day weighted DBMarket recalculated
       → TSM:EncodeItemData persists to SavedVariable
   → auctionItem:FilterRecords (maxPrice display filter, does not affect DB)
@@ -83,3 +84,19 @@ Shopping search result received
 **`TradeSkillMaster_Shopping/modules/Search.lua`**
 - Modified `ScanCallback` (`"process"` event branch) to extract compact records from `auctionItem.records` and call `TSMAPI.AuctionDB.UpdateFromSearchResults` before `FilterRecords` and `SetMarketValue` run.
 - **Why**: Records must be captured before `FilterRecords` removes auctions that exceed the user's max-price cap — those auctions are still valid market data. Running the DB update before `SetMarketValue` means the `% Market Value` column in Shopping's results table immediately reflects the freshly calculated price. The call is guarded by `if TSMAPI.AuctionDB and ...` so it fails safely if AuctionDB is absent.
+
+### 2026-06-06
+
+**`TradeSkillMaster_AuctionDB/TradeSkillMaster_AuctionDB.lua`**
+- Added AH deposit and profit lines to the AuctionDB tooltip section (shown below Min Buyout). Displays 12h/24h/48h deposit costs (15%/30%/60% of vendor sell price, min 1c) and estimated profit per duration. Profit uses `DBMinBuyout` as primary price source, falling back to `DBMarket`; shows N/A when both are unavailable.
+- Extended Min Buyout tooltip line to append a percentage-below/above-market annotation in green (`% below market`) or red (`% above market`), calculated as `math.floor(math.abs(1 - minBuyout/marketValue) * 100)`. Only shown when both values are non-zero and unequal.
+- Added "Total quantity: X units" line after Min Buyout, sourced from `TSM.data[itemID].quantity`.
+- Updated tooltip header from `"X auctions (Y ago)"` to `"X auctions / Y sellers (Z ago)"` using `TSM.data[itemID].sellerCount`.
+- **File write note**: the Edit tool does not persist writes to this file on this machine (likely blocked by AV/Defender). All changes must be applied via PowerShell `[System.IO.File]::WriteAllText`.
+
+**`TradeSkillMaster_AuctionDB/Modules/data.lua`**
+- Extended `Data:UpdateFromSearchResults` signature to accept `sellerCount` (5th parameter); stores it as `itemData.sellerCount = sellerCount or 0`.
+- Updated `TSMAPI.AuctionDB.UpdateFromSearchResults` wrapper to pass `sellerCount` through.
+
+**`TradeSkillMaster_Shopping/modules/Search.lua`**
+- Extended the `ScanCallback` record loop to count unique sellers via `record.seller` (field confirmed in `LibAuctionScan-1.0/AuctionItem.lua`). Passes `sellerCount` as the 5th argument to `TSMAPI.AuctionDB.UpdateFromSearchResults`.
