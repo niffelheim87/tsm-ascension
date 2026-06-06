@@ -1,4 +1,4 @@
--- ------------------------------------------------------------------------------ --
+﻿-- ------------------------------------------------------------------------------ --
 --                           TradeSkillMaster_AuctionDB                           --
 --           http://www.curse.com/addons/wow/tradeskillmaster_auctiondb           --
 --                                                                                --
@@ -281,6 +281,30 @@ function TSM:GetTooltip(itemString, quantity)
 		end
 	end
 
+
+	-- add AH deposit and profit info
+	local vendorSellPrice = select(11, TSMAPI:GetSafeItemInfo(itemString))
+	if vendorSellPrice and vendorSellPrice > 0 then
+		local marketValue = TSM:GetMarketValue(itemID)
+		local minBuyout = TSM:GetMinBuyout(itemID)
+		local deposit12h = max(1, floor(vendorSellPrice * 0.15))
+		local deposit24h = max(1, floor(vendorSellPrice * 0.30))
+		local deposit48h = max(1, floor(vendorSellPrice * 0.60))
+		local function depositLine(duration, deposit)
+			local depositStr = TSMAPI:FormatTextMoney(deposit, "|cffffffff", true)
+			local profitStr
+			local priceForProfit = (minBuyout and minBuyout > 0) and minBuyout or marketValue
+			if not priceForProfit or priceForProfit == 0 then
+				profitStr = "|cffffffffN/A|r"
+			else
+				profitStr = TSMAPI:FormatTextMoney(priceForProfit - deposit, "|cffffffff", true)
+			end
+			tinsert(text, { left = "  AH Deposit (" .. duration .. "):", right = depositStr .. "  Profit: " .. profitStr })
+		end
+		depositLine("12h", deposit12h)
+		depositLine("24h", deposit24h)
+		depositLine("48h", deposit48h)
+	end
 	-- add heading and last scan time info
 	if #text > 0 then
 		local lastScan = TSM:GetLastScanTime(itemID)
