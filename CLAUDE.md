@@ -1,4 +1,4 @@
-# CLAUDE.md
+﻿# CLAUDE.md
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
@@ -108,3 +108,9 @@ Shopping search result received
 - Replaced vendor/resell comparison block with a tier-aware SNIPE alert system. When `minBuyout` is far enough below `DBMarket` for the item's market depth tier (Scarce: `< 60% market` and `profitPct > 40`; Medium: `< 70%` and `> 25`; Saturated: `< 75%` and `> 15`), a highlighted `[!] SNIPE - XX% below market` header appears followed by Resell profit (with percentage) and Vendor profit. When no snipe is detected, the existing green/gray ranked comparison is shown instead.
 - Fixed deposit profit formula throughout: profit is now `saleValue - minBuyout - deposit` where `saleValue = floor(DBMarket * 0.95)` (accounts for the 5% AH transaction fee applied to the sale). The old formula used raw `MinBuyout` as the sale reference.
 - SNIPE/profit block now requires both `minBuyout > 0` and `marketValue > 0`; deposit profit lines show N/A when either is missing.
+
+**`TradeSkillMaster/Core/Tooltips.lua`**
+- Added ItemID line at the very bottom of the entire TSM tooltip, outside all module sections. Rendered directly in `private.LoadTooltip` after the module rendering loop, so it is always the absolute last visible line regardless of which modules are loaded.
+- Format: gray `――――――――――――――――` separator line followed by `ItemID: XXXXX` in gray (`|cff999999`). ItemID extracted from `itemString` via `itemString:match("item:(%d+)")` with `tonumber(itemString)` numeric fallback.
+- **Why**: Injecting from inside any module's `GetTooltip` would place the line within that module's block and subject it to module load-order. Placing it in `private.LoadTooltip` after the loop guarantees it is always last.
+- **File write note**: also requires PowerShell `[System.IO.File]::WriteAllText` on this machine (same AV/Defender restriction as AuctionDB.lua).

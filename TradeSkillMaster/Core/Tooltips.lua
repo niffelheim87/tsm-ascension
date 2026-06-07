@@ -1,4 +1,4 @@
--- ------------------------------------------------------------------------------ --
+﻿-- ------------------------------------------------------------------------------ --
 --                                TradeSkillMaster                                --
 --                http://www.curse.com/addons/wow/tradeskill-master               --
 --                                                                                --
@@ -80,6 +80,11 @@ function private.LoadTooltip(tipFrame, link, quantity)
 			else
 				tooltipLib:AddLine(tipFrame, lines[i], r / 255, g / 255, b / 255, TSM.db.profile.embeddedTooltip)
 			end
+		end
+		local displayItemID = tonumber(itemString:match("item:(%d+)")) or tonumber(itemString)
+		if displayItemID then
+			tooltipLib:AddLine(tipFrame, "  |cff999999――――――――――――――――|r", 1, 1, 1, TSM.db.profile.embeddedTooltip)
+			tooltipLib:AddLine(tipFrame, "  |cff999999ItemID: " .. tostring(displayItemID) .. "|r", 1, 1, 1, TSM.db.profile.embeddedTooltip)
 		end
 		tooltipLib:AddLine(tipFrame, " ", 1, 1, 0, TSM.db.profile.embeddedTooltip)
 	end
