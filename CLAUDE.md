@@ -114,3 +114,20 @@ Shopping search result received
 - Format: gray `――――――――――――――――` separator line followed by `ItemID: XXXXX` in gray (`|cff999999`). ItemID extracted from `itemString` via `itemString:match("item:(%d+)")` with `tonumber(itemString)` numeric fallback.
 - **Why**: Injecting from inside any module's `GetTooltip` would place the line within that module's block and subject it to module load-order. Placing it in `private.LoadTooltip` after the loop guarantees it is always last.
 - **File write note**: also requires PowerShell `[System.IO.File]::WriteAllText` on this machine (same AV/Defender restriction as AuctionDB.lua).
+
+
+**`TradeSkillMaster_Crafting/Modules/ReagentScan.lua`** (new file)
+- Hooks `TRADE_SKILL_SHOW` and `TRADE_SKILL_UPDATE` events to scan all recipes in the open profession window using `GetNumTradeSkills`, `GetTradeSkillInfo`, `GetTradeSkillNumReagents`, `GetTradeSkillReagentItemLink`, and `GetTradeSkillReagentInfo`.
+- Builds a reverse lookup: `TSM.db.realm.reagentData[itemID][professionName] = {qty, ...}` (quantities sorted ascending, deduplicated) stored under `AscensionTSM_CraftingDB`.
+- Exposes `TSMAPI.GetReagentData(itemID)` for read access from any module.
+- Exposes `TSMAPI.MergeReagentData(itemID, profName, qty)` as a Phase 2 hook for external data sources (static tables, server feeds) to inject data without requiring an open trade-skill window.
+- Mirrors live table to `TSMAPI.reagentData` after each scan.
+
+**`TradeSkillMaster_Crafting/TradeSkillMaster_Crafting.lua`**
+- Added `reagentData = {}` to the `realm` scope of `savedDBDefaults` so the table persists across sessions under `AscensionTSM_CraftingDB`.
+
+**`TradeSkillMaster_Crafting/TradeSkillMaster_Crafting.toc`**
+- Added `Modules\ReagentScan.lua` (loads after SpellNames2IDs.lua, before VellumInfo.lua).
+
+**`TradeSkillMaster_AuctionDB/TradeSkillMaster_AuctionDB.lua`**
+- Inside `GetTooltip`, after the AuctionDB header line is inserted, appends a `"Your crafting:"` line (gray label, white value) listing each profession and its sorted/deduplicated reagent quantities, e.g. `Cooking x1,2  |  Tailoring x4`. Professions are sorted alphabetically. The block is guarded by `if TSMAPI.GetReagentData then` so it fails silently if the Crafting module is absent.

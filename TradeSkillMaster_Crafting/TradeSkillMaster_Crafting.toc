@@ -30,4 +30,5 @@ Modules\EnchantingInfo.lua
 Modules\Gather.lua
 Modules\Sync.lua
 Modules\SpellNames2IDs.lua
+Modules\ReagentScan.lua
 Modules\VellumInfo.lua

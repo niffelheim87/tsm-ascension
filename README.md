@@ -127,6 +127,7 @@ TSM AuctionDB:       12 auctions / 4 sellers (19hr ago)
   [!] SNIPE - 76% below market
   Resell profit:     20s 83c (69%)
   Vendor profit:     loss
+  Your crafting:     Cooking x1,2  |  Tailoring x4
   ――――――――――――――――
   ItemID: 12345
 ```
@@ -137,6 +138,7 @@ TSM AuctionDB:       12 auctions / 4 sellers (19hr ago)
 - **Market tier** — Scarce (< 50 units, green) / Medium (< 500, yellow) / Saturated (≥ 500, red). Drives SNIPE thresholds.
 - **AH Deposit / Profit** — deposit cost for each auction duration (15%/30%/60% of vendor sell price, minimum 1c). Profit = `floor(DBMarket × 0.95) − minBuyout − deposit` (accounts for the 5% AH fee). Shows N/A when either price is missing. Only shown for items with a vendor sell price.
 - **SNIPE alert** — shown when `minBuyout` is far enough below `DBMarket` for the item's tier (Scarce: < 60% market and profit > 40%; Medium: < 70% and > 25%; Saturated: < 75% and > 15%). Displays how far below market, resell profit with %, and vendor profit. The better of resell/vendor is highlighted green; the worse is gray. When no snipe is detected, a plain ranked comparison of the two profit lines is shown instead.
+- **Your crafting** — shown at the bottom of the AuctionDB section when ``TSMAPI.GetReagentData`` has data for the item. Lists each profession that uses the item as a reagent, with sorted/deduplicated quantities (e.g. ``Cooking x1,2  |  Tailoring x4``). Populated by opening any trade-skill window; data persists across sessions. Only shown when the Crafting module is loaded.
 - **ItemID** — always the very last line of the TSM tooltip block, separated by a gray rule. Useful for confirming item IDs on Ascension where custom items may share names with standard WotLK items.
 
 ### Price sources available

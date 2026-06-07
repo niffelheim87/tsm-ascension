@@ -37,7 +37,8 @@ local savedDBDefaults = {
 		queueStatus = { collapsed = {} },
 		sourceStatus = { collapsed = {} },
 		gathering = { crafter = nil, professions = {}, neededMats = {}, availableMats = {}, gatheredMats = false, gatherAll = false, destroyingMats = {}, destroyDisable = false, evenStacks = true },
-		craftingCostCache = {}
+		craftingCostCache = {},
+		reagentData = {},
 	},
 }
 
