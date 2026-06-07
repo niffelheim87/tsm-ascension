@@ -234,6 +234,26 @@ function TSM:GetTooltip(itemString)
 	end
 
 
+	if TSMAPI.GetReagentData then
+		local itemID = tonumber(itemString:match("item:(%d+)"))
+		if itemID then
+			local reagentData = TSMAPI.GetReagentData(itemID)
+			if reagentData then
+				local parts = {}
+				for profName, qtys in pairs(reagentData) do
+					if #qtys > 0 then
+						local qtyStrs = {}
+						for _, qty in ipairs(qtys) do tinsert(qtyStrs, tostring(qty)) end
+						tinsert(parts, profName .. " x" .. table.concat(qtyStrs, ","))
+					end
+				end
+				if #parts > 0 then
+					table.sort(parts)
+					tinsert(text, { left = "  |cff999999Your crafting:|r", right = "|cffffffff" .. table.concat(parts, "  |  ") .. "|r" })
+				end
+			end
+		end
+	end
 	if #text > 0 then
 		tinsert(text, 1, "|cffffff00" .. "TSM Crafting:")
 		return text

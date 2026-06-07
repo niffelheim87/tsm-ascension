@@ -386,23 +386,6 @@ function TSM:GetTooltip(itemString, quantity)
 		else
 			tinsert(text, 1, { left = "|cffffff00" .. "TSM AuctionDB:", right = "|cffffffff" .. L["Not Scanned"] })
 		end
-		if TSMAPI.GetReagentData then
-			local reagentData = TSMAPI.GetReagentData(itemID)
-			if reagentData then
-				local parts = {}
-				for profName, qtys in pairs(reagentData) do
-					if #qtys > 0 then
-						local qtyStrs = {}
-						for _, qty in ipairs(qtys) do tinsert(qtyStrs, tostring(qty)) end
-						tinsert(parts, profName .. " x" .. table.concat(qtyStrs, ","))
-					end
-				end
-				if #parts > 0 then
-					table.sort(parts)
-					tinsert(text, { left = "  |cff999999Your crafting:|r", right = "|cffffffff" .. table.concat(parts, "  |  ") .. "|r" })
-				end
-			end
-		end
 		return text
 	end
 end
