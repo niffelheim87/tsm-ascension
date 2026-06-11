@@ -143,3 +143,6 @@ Shopping search result received
 - Replaced old resell/vendor block with four relist scenario lines (50%, 65%, 80%, 95% of DBMarket). Each shows the target listing price in gray, net profit in green/red (after 5% AH fee and 48h deposit), and ROI%. `[!] SNIPE` header appears above these lines when the trigger fires; always shows relist lines when both prices are available.
 - Added relist target price in parentheses on each label (e.g. `Relist 65% (4g 50s):`), so the listing price is visible at a glance without mental math.
 - Fixed: `if #text > 0 then` wrapper block and `local lastScan = TSM:GetLastScanTime(itemID)` line were missing after a prior edit, causing the tooltip to return nothing. Re-inserted.
+
+**TradeSkillMaster_AuctionDB/TradeSkillMaster_AuctionDB.lua** (continued 2026-06-11)
+- Added `Sell (farm)` section below Vendor profit. Shows net gain over vendoring at 6 price targets: 50%, 65%, 80%, 95% of DBMarket, exact DBMarket, and DBMinBuyout. Formula: `sellNet = floor(price * 0.95) - deposit48h - vendorSellPrice`. Color: green if `sellNet > 0`, yellow if `>= -10c`, red if `< -10c`. Each label shows the target sell price in gray (e.g. `Sell 65% (4g 50s):`). Rendered inside the `if vendorSellPrice > 0` block so deposit and vendor baseline are always available.

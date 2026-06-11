@@ -126,6 +126,13 @@ TSM AuctionDB:       12 auctions / 4 sellers (19hr ago)
   Relist 80% (24s):  15s 99c  (228% ROI)
   Relist 95% (28s):  20s 99c  (299% ROI)
   Vendor profit:     20s 93c
+  Sell (farm):
+  Sell 50% (15s):   -3s 17c
+  Sell 65% (19s):    1s 83c
+  Sell 80% (24s):    6s 83c
+  Sell 95% (28s):   11s 83c
+  Sell mkt (30s):   14s 83c
+  Sell MBO (7s):   -22s 83c
   Your crafting:     Cooking x1,2  |  Tailoring x4
   ――――――――――――――――
   ItemID: 12345
@@ -137,6 +144,7 @@ TSM AuctionDB:       12 auctions / 4 sellers (19hr ago)
 - **SNIPE alert** — `[!] SNIPE - XX% below market  ROI YY%` appears when the net profit from relisting at the tier target exceeds 25% ROI. Relist multipliers by tier: 0.95 / 0.90 / 0.85 / 0.70 / 0.55 (Scarce → Flooded), silently adjusted ±0.08–0.10 by the item's historical sale rate from TSM Accounting if available.
 - **Relist scenarios** — four lines showing profit and ROI for relisting at 50%, 65%, 80%, and 95% of market value. Each line shows the target listing price in gray (e.g. `Relist 65% (4g 50s):`), net profit in green/red (after 5% AH fee and 48h deposit), and ROI%. Always shown when both prices are available.
 - **Vendor profit** — profit from vendoring the item instead of relisting. Shown below the relist scenarios.
+- **Sell (farm)** — net gain over vendoring at six price targets: 50%, 65%, 80%, 95% of DBMarket, exact DBMarket, and DBMinBuyout. Formula: `sellNet = floor(price × 0.95) − deposit48h − vendorSellPrice`. Green if positive (AH beats vendor), yellow within 10c of break-even, red below. Target sell price shown in gray in each label. Only shown when vendorSellPrice is available.
 - **Your crafting** — shown at the bottom of the AuctionDB section when `TSMAPI.GetReagentData` has data for the item. Lists each profession that uses the item as a reagent, with sorted/deduplicated quantities (e.g. `Cooking x1,2  |  Tailoring x4`). Populated by opening any trade-skill window; data persists across sessions. Only shown when the Crafting module is loaded.
 - **ItemID** — always the very last line of the TSM tooltip block, separated by a gray rule. Useful for confirming item IDs on Ascension where custom items may share names with standard WotLK items.
 
