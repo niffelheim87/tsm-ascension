@@ -405,7 +405,7 @@ function TSM:GetTooltip(itemString, quantity)
 			end
 			local timeDiff = SecondsToTime(time() - lastScan)		
 			--tinsert(text, 1, { left = "|cffffff00" .. "TSM AuctionDB:", right = "|cffffffff" .. format(L["%s ago"], timeDiff) })
-			tinsert(text, 1, { left = "|cffffff00" .. "TSM AuctionDB:", right = format("%s (%s)", format("|cffffffff".."%d auctions / %d sellers".."|r", TSM.data[itemID].quantity, TSM.data[itemID].sellerCount or 0), format(timeColor..L["%s ago"].."|r", timeDiff)) })
+			tinsert(text, 1, { left = "|cffffff00" .. "TSM AuctionDB:", right = format("%s (%s)", format("|cffffffff".."%d auctions / %d sellers".."|r", TSM.data[itemID].quantity or 0, TSM.data[itemID].sellerCount or 0), format(timeColor..L["%s ago"].."|r", timeDiff)) })
 		else
 			tinsert(text, 1, { left = "|cffffff00" .. "TSM AuctionDB:", right = "|cffffffff" .. L["Not Scanned"] })
 		end
