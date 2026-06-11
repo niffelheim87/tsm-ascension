@@ -131,3 +131,15 @@ Shopping search result received
 
 **`TradeSkillMaster_AuctionDB/TradeSkillMaster_AuctionDB.lua`**
 - Inside `GetTooltip`, after the AuctionDB header line is inserted, appends a `"Your crafting:"` line (gray label, white value) listing each profession and its sorted/deduplicated reagent quantities, e.g. `Cooking x1,2  |  Tailoring x4`. Professions are sorted alphabetically. The block is guarded by `if TSMAPI.GetReagentData then` so it fails silently if the Crafting module is absent.
+
+### 2026-06-11
+
+**`TradeSkillMaster_AuctionDB/TradeSkillMaster_AuctionDB.lua`**
+- Removed the three AH Deposit lines (12h/24h/48h) — too cluttered now that relist scenario lines replace them.
+- Removed `Total quantity: X units` line — redundant with the header's `X auctions / Y sellers` count.
+- Expanded market tier from 3-tier to 5-tier: Scarce (< 50, green) / Low (< 200, cyan) / Medium (< 1,000, yellow) / High (< 5,000, orange) / Flooded (≥ 5,000, red). Same breakpoints drive the tier-aware `relistMultiplier` (0.95 / 0.90 / 0.85 / 0.70 / 0.55).
+- Replaced old tier-specific SNIPE thresholds with a unified trigger: `netProfit > 0 AND roi > 25`, where `saleValue = floor(market × relistMultiplier × 0.95)`, `netProfit = saleValue − minBuyout − deposit48h`, `roi = netProfit / minBuyout × 100`.
+- Added silent sale rate adjustment via `LibStub("AceAddon-3.0"):GetAddon("TSM_Accounting", true)`: if `saleRate ≥ 0.7` then `relistMultiplier += 0.08` (capped 0.95); if `saleRate < 0.3` then `relistMultiplier -= 0.10` (floor 0.30). Not shown in tooltip — only affects the internal relist target.
+- Replaced old resell/vendor block with four relist scenario lines (50%, 65%, 80%, 95% of DBMarket). Each shows the target listing price in gray, net profit in green/red (after 5% AH fee and 48h deposit), and ROI%. `[!] SNIPE` header appears above these lines when the trigger fires; always shows relist lines when both prices are available.
+- Added relist target price in parentheses on each label (e.g. `Relist 65% (4g 50s):`), so the listing price is visible at a glance without mental math.
+- Fixed: `if #text > 0 then` wrapper block and `local lastScan = TSM:GetLastScanTime(itemID)` line were missing after a prior edit, causing the tooltip to return nothing. Re-inserted.

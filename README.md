@@ -119,14 +119,13 @@ Hover over any item with a TSM tooltip. The **TSM AuctionDB** section shows:
 TSM AuctionDB:       12 auctions / 4 sellers (19hr ago)
   Market Value:      30s
   Min Buyout:        7s  (76% below market)
-  Total quantity:    40 units
   Market tier:       Scarce
-  AH Deposit (12h):  4c   Profit: 20s 96c
-  AH Deposit (24h):  8c   Profit: 20s 92c
-  AH Deposit (48h):  17c  Profit: 20s 83c
-  [!] SNIPE - 76% below market
-  Resell profit:     20s 83c (69%)
-  Vendor profit:     loss
+  [!] SNIPE - 76% below market  ROI 285%
+  Relist 50% (15s):  6s 99c  (99% ROI)
+  Relist 65% (19s):  10s 99c  (157% ROI)
+  Relist 80% (24s):  15s 99c  (228% ROI)
+  Relist 95% (28s):  20s 99c  (299% ROI)
+  Vendor profit:     20s 93c
   Your crafting:     Cooking x1,2  |  Tailoring x4
   ――――――――――――――――
   ItemID: 12345
@@ -134,11 +133,11 @@ TSM AuctionDB:       12 auctions / 4 sellers (19hr ago)
 
 - **Header** — auction count, unique seller count, and time since last scan. Color-coded: green = under 3 hours, yellow = under 12 hours, red = older.
 - **Min Buyout** — annotated with how far it sits below (green) or above (red) the 14-day market value.
-- **Total quantity** — total stack units seen across all auctions in the last search.
-- **Market tier** — Scarce (< 50 units, green) / Medium (< 500, yellow) / Saturated (≥ 500, red). Drives SNIPE thresholds.
-- **AH Deposit / Profit** — deposit cost for each auction duration (15%/30%/60% of vendor sell price, minimum 1c). Profit = `floor(DBMarket × 0.95) − minBuyout − deposit` (accounts for the 5% AH fee). Shows N/A when either price is missing. Only shown for items with a vendor sell price.
-- **SNIPE alert** — shown when `minBuyout` is far enough below `DBMarket` for the item's tier (Scarce: < 60% market and profit > 40%; Medium: < 70% and > 25%; Saturated: < 75% and > 15%). Displays how far below market, resell profit with %, and vendor profit. The better of resell/vendor is highlighted green; the worse is gray. When no snipe is detected, a plain ranked comparison of the two profit lines is shown instead.
-- **Your crafting** — shown at the bottom of the AuctionDB section when ``TSMAPI.GetReagentData`` has data for the item. Lists each profession that uses the item as a reagent, with sorted/deduplicated quantities (e.g. ``Cooking x1,2  |  Tailoring x4``). Populated by opening any trade-skill window; data persists across sessions. Only shown when the Crafting module is loaded.
+- **Market tier** — 5-tier depth indicator: Scarce (< 50, green) / Low (< 200, cyan) / Medium (< 1,000, yellow) / High (< 5,000, orange) / Flooded (≥ 5,000, red). Drives the tier-aware relist multiplier used in all profit calculations.
+- **SNIPE alert** — `[!] SNIPE - XX% below market  ROI YY%` appears when the net profit from relisting at the tier target exceeds 25% ROI. Relist multipliers by tier: 0.95 / 0.90 / 0.85 / 0.70 / 0.55 (Scarce → Flooded), silently adjusted ±0.08–0.10 by the item's historical sale rate from TSM Accounting if available.
+- **Relist scenarios** — four lines showing profit and ROI for relisting at 50%, 65%, 80%, and 95% of market value. Each line shows the target listing price in gray (e.g. `Relist 65% (4g 50s):`), net profit in green/red (after 5% AH fee and 48h deposit), and ROI%. Always shown when both prices are available.
+- **Vendor profit** — profit from vendoring the item instead of relisting. Shown below the relist scenarios.
+- **Your crafting** — shown at the bottom of the AuctionDB section when `TSMAPI.GetReagentData` has data for the item. Lists each profession that uses the item as a reagent, with sorted/deduplicated quantities (e.g. `Cooking x1,2  |  Tailoring x4`). Populated by opening any trade-skill window; data persists across sessions. Only shown when the Crafting module is loaded.
 - **ItemID** — always the very last line of the TSM tooltip block, separated by a gray rule. Useful for confirming item IDs on Ascension where custom items may share names with standard WotLK items.
 
 ### Price sources available

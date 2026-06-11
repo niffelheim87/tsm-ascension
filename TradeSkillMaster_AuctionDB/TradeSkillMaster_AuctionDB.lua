@@ -291,17 +291,20 @@ function TSM:GetTooltip(itemString, quantity)
 		end
 	end
 
-	-- add total quantity and market tier
+	-- add market tier
 	local totalQty = TSM.data[itemID] and TSM.data[itemID].quantity or 0
 	if totalQty > 0 then
-		tinsert(text, { left = "  Total quantity:", right = "|cffffffff" .. totalQty .. " units|r" })
 		local tierLabel
 		if totalQty < 50 then
 			tierLabel = "|cff00ff00Scarce|r"
-		elseif totalQty < 500 then
+		elseif totalQty < 200 then
+			tierLabel = "|cff00ffffLow|r"
+		elseif totalQty < 1000 then
 			tierLabel = "|cffffff00Medium|r"
+		elseif totalQty < 5000 then
+			tierLabel = "|cffff8800High|r"
 		else
-			tierLabel = "|cffff0000Saturated|r"
+			tierLabel = "|cffff0000Flooded|r"
 		end
 		tinsert(text, { left = "  Market tier:", right = tierLabel })
 	end
@@ -312,61 +315,51 @@ function TSM:GetTooltip(itemString, quantity)
 	if vendorSellPrice and vendorSellPrice > 0 then
 		local marketValue = TSM:GetMarketValue(itemID)
 		local minBuyout = TSM:GetMinBuyout(itemID)
-		local deposit12h = max(1, floor(vendorSellPrice * 0.15))
-		local deposit24h = max(1, floor(vendorSellPrice * 0.30))
 		local deposit48h = max(1, floor(vendorSellPrice * 0.60))
-		local saleValue = (marketValue and marketValue > 0) and floor(marketValue * 0.95) or nil
-		local function depositLine(duration, deposit)
-			local depositStr = TSMAPI:FormatTextMoney(deposit, "|cffffffff", true)
-			local profitStr
-			if not saleValue or not minBuyout or minBuyout == 0 then
-				profitStr = "|cffffffffN/A|r"
-			else
-				profitStr = TSMAPI:FormatTextMoney(saleValue - minBuyout - deposit, "|cffffffff", true)
+		-- tier-aware relist target, adjusted by sale rate if available
+		local qty = TSM.data[itemID] and TSM.data[itemID].quantity or 0
+		local relistMultiplier
+		if qty < 50 then relistMultiplier = 0.95
+		elseif qty < 200 then relistMultiplier = 0.90
+		elseif qty < 1000 then relistMultiplier = 0.85
+		elseif qty < 5000 then relistMultiplier = 0.70
+		else relistMultiplier = 0.55 end
+		local acct = LibStub("AceAddon-3.0"):GetAddon("TSM_Accounting", true)
+		if acct and acct.items and acct.items[itemString] then
+			local _, totalSaleNum = acct:GetAvgSellPrice(itemString)
+			local _, _, totalFailed = acct:GetAuctionStats(itemString)
+			if totalSaleNum and totalSaleNum > 0 and totalFailed and totalFailed > 0 then
+				local saleRate = totalSaleNum / (totalSaleNum + totalFailed)
+				if saleRate >= 0.7 then relistMultiplier = math.min(relistMultiplier + 0.08, 0.95)
+				elseif saleRate < 0.3 then relistMultiplier = math.max(relistMultiplier - 0.10, 0.30) end
 			end
-			tinsert(text, { left = "  AH Deposit (" .. duration .. "):", right = depositStr .. "  Profit: " .. profitStr })
 		end
-		depositLine("12h", deposit12h)
-		depositLine("24h", deposit24h)
-		depositLine("48h", deposit48h)
+		local saleValue = (marketValue and marketValue > 0) and floor(marketValue * relistMultiplier * 0.95) or nil
 		if minBuyout and minBuyout > 0 and marketValue and marketValue > 0 then
-			local resellProfit = saleValue - minBuyout - deposit48h
-			local profitPct = resellProfit / marketValue * 100
-			local vendorProfit = vendorSellPrice - minBuyout
-			local qty = TSM.data[itemID] and TSM.data[itemID].quantity or 0
-			local snipeTriggered = false
-			if qty < 50 then
-				snipeTriggered = minBuyout < marketValue * 0.60 and profitPct > 40
-			elseif qty < 500 then
-				snipeTriggered = minBuyout < marketValue * 0.70 and profitPct > 25
-			else
-				snipeTriggered = minBuyout < marketValue * 0.75 and profitPct > 15
-			end
-			if snipeTriggered then
+			local netProfit = saleValue - minBuyout - deposit48h
+			local roi = netProfit / minBuyout * 100
+			if netProfit > 0 and roi > 25 then
 				local belowPct = floor((1 - minBuyout / marketValue) * 100)
-				tinsert(text, { left = "|cffff9900[!] SNIPE - " .. belowPct .. "% below market|r", right = "" })
-				local resellColor = resellProfit > vendorProfit and "|cff00ff00" or "|cff999999"
-				tinsert(text, { left = "  Resell profit:", right = TSMAPI:FormatTextMoney(resellProfit, resellColor, true) .. " (" .. floor(profitPct) .. "%)" })
-				local vendorStr
-				if vendorProfit < 0 then
-					vendorStr = "|cffff0000loss|r"
+				tinsert(text, { left = "|cffff9900[!] SNIPE - " .. belowPct .. "% below market  ROI " .. floor(roi) .. "%|r", right = "" })
+			end
+			for _, pct in ipairs({50, 65, 80, 95}) do
+				local relistPrice = floor(marketValue * (pct / 100))
+				local relistSale = floor(relistPrice * 0.95)
+				local profit = relistSale - minBuyout - deposit48h
+				local roiPct = floor(profit / minBuyout * 100)
+				local profitStr
+				if profit >= 0 then
+					profitStr = TSMAPI:FormatTextMoney(profit, "|cff00ff00", true) .. " |cff00ff00(" .. roiPct .. "% ROI)|r"
 				else
-					local vendorColor = vendorProfit > resellProfit and "|cff00ff00" or "|cff999999"
-					vendorStr = TSMAPI:FormatTextMoney(vendorProfit, vendorColor, true)
+					profitStr = "|cffff4444-" .. TSMAPI:FormatTextMoney(-profit, "|cffff4444", true) .. " (" .. roiPct .. "% ROI)|r"
 				end
-				tinsert(text, { left = "  Vendor profit:", right = vendorStr })
+				tinsert(text, { left = "  Relist " .. pct .. "% (" .. TSMAPI:FormatTextMoney(relistPrice, "|cffaaaaaa", true) .. "):|r", right = profitStr })
+			end
+			local vendorProfit = vendorSellPrice - minBuyout
+			if vendorProfit >= 0 then
+				tinsert(text, { left = "  Vendor profit:", right = TSMAPI:FormatTextMoney(vendorProfit, "|cff999999", true) })
 			else
-				local vendorStr
-				if vendorProfit < 0 then
-					vendorStr = "|cffff0000loss|r"
-				end
-				if vendorProfit > resellProfit then
-					tinsert(text, { left = "  Vendor profit:", right = vendorStr or TSMAPI:FormatTextMoney(vendorProfit, "|cff00ff00", true) })
-					tinsert(text, { left = "  Resell profit:", right = TSMAPI:FormatTextMoney(resellProfit, "|cff999999", true) })
-				else
-					tinsert(text, { left = "  Resell profit:", right = TSMAPI:FormatTextMoney(resellProfit, "|cff00ff00", true) })
-					tinsert(text, { left = "  Vendor profit:", right = vendorStr or TSMAPI:FormatTextMoney(vendorProfit, "|cff999999", true) })
-				end
+				tinsert(text, { left = "  Vendor profit:", right = "|cffff4444loss|r" })
 			end
 		end
 	end
