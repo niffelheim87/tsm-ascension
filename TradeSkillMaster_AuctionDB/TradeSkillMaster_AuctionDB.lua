@@ -588,7 +588,7 @@ function TSM:EncodeItemData(itemID, tbl)
 	tbl = tbl or TSM.data
 	local data = tbl[itemID]
 	if data and data.marketValue then
-		data.encoded = strjoin(",", encode(0), encode(data.marketValue), encode(data.lastScan), encode(0), encode(data.minBuyout), encodeScans(data.scans), encode(data.quantity))
+		data.encoded = strjoin(",", encode(0), encode(data.marketValue), encode(data.lastScan), encode(0), encode(data.minBuyout), encodeScans(data.scans), encode(data.quantity), encode(data.sellerCount or 0))
 	end
 end
 
@@ -596,12 +596,13 @@ function TSM:DecodeItemData(itemID, tbl)
 	tbl = tbl or TSM.data
 	local data = tbl[itemID]
 	if data and data.encoded and not data.marketValue then
-		local a, b, c, d, e, f, g = (","):split(data.encoded)
+		local a, b, c, d, e, f, g, h = (","):split(data.encoded)
 		data.marketValue = decode(b)
 		data.lastScan = decode(c)
 		data.minBuyout = decode(e)
-		data.scans = decodeScans(f)	
-		data.quantity = decode(g)	
+		data.scans = decodeScans(f)
+		data.quantity = decode(g)
+		data.sellerCount = h and decode(h) or 0
 	end
 end
 
