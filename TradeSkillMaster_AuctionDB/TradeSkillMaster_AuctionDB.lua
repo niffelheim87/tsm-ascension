@@ -362,6 +362,36 @@ function TSM:GetTooltip(itemString, quantity)
 				tinsert(text, { left = "  Vendor profit:", right = "|cffff4444loss|r" })
 			end
 		end
+		-- Sell (farm): net gain over vendoring at various price targets
+		if (marketValue and marketValue > 0) or (minBuyout and minBuyout > 0) then
+			tinsert(text, { left = "|cffff9900Sell (farm):|r", right = "" })
+			local function addSellLine(label, price)
+				local sellNet = floor(price * 0.95) - deposit48h - vendorSellPrice
+				local profitStr
+				if sellNet > 0 then
+					profitStr = TSMAPI:FormatTextMoney(sellNet, "|cff00ff00", true)
+				elseif sellNet >= -10 then
+					if sellNet == 0 then
+						profitStr = "|cffffff00break-even|r"
+					else
+						profitStr = "|cffffff00-" .. TSMAPI:FormatTextMoney(-sellNet, "|cffffff00", true) .. "|r"
+					end
+				else
+					profitStr = "|cffff4444-" .. TSMAPI:FormatTextMoney(-sellNet, "|cffff4444", true) .. "|r"
+				end
+				tinsert(text, { left = label, right = profitStr })
+			end
+			if marketValue and marketValue > 0 then
+				for _, pct in ipairs({50, 65, 80, 95}) do
+					local sp = floor(marketValue * (pct / 100))
+					addSellLine("  Sell " .. pct .. "% (" .. TSMAPI:FormatTextMoney(sp, "|cffaaaaaa", true) .. "):|r", sp)
+				end
+				addSellLine("  Sell mkt (" .. TSMAPI:FormatTextMoney(marketValue, "|cffaaaaaa", true) .. "):|r", marketValue)
+			end
+			if minBuyout and minBuyout > 0 then
+				addSellLine("  Sell MBO (" .. TSMAPI:FormatTextMoney(minBuyout, "|cffaaaaaa", true) .. "):|r", minBuyout)
+			end
+		end
 	end
 	-- add heading and last scan time info
 	if #text > 0 then
