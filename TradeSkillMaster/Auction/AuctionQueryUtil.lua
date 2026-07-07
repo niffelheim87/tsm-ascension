@@ -62,21 +62,6 @@ local function GetCommonQueryInfo(name, items)
 	return queries
 end
 
-local function GetCommonQueryInfoClass(class, items)
-	local resultQuery = TSMAPI:GetAuctionQueryInfo(items[1])
-	resultQuery.name = ""
-	resultQuery.class = class
-	for i=2, #items do
-		local itemQuery = TSMAPI:GetAuctionQueryInfo(items[i])
-		resultQuery.minLevel = min(resultQuery.minLevel, itemQuery.minLevel)
-		resultQuery.maxLevel = max(resultQuery.maxLevel, itemQuery.maxLevel)
-		resultQuery.quality = (resultQuery.quality == itemQuery.quality) and resultQuery.quality or nil
-		if resultQuery.subClass ~= itemQuery.subClass then resultQuery.subClass = nil end
-	end
-	resultQuery.items = items
-	return {resultQuery}
-end
-
 local function GreatestSubstring(str1, str2)
 	local parts1 = {(" "):split(str1)}
 	local parts2 = {(" "):split(str2)}
@@ -258,18 +243,11 @@ local function GenerateQueriesThread(self)
 	if not filters1 or not filters2 then return end
 	local filters = num2 < num1 and filters2 or filters1
 	
-	-- generate class filters
-	local itemClasses = {}
-	local classes = {GetAuctionItemClasses()}
-	for _, itemString in ipairs(private.itemList) do
-		local classIndex = GetItemClasses(itemString)
-		if classIndex then
-			itemClasses[classIndex] = itemClasses[classIndex] or {}
-			tinsert(itemClasses[classIndex], itemString)
-		end
-	end
-	
 	-- create the actual queries
+	-- NOTE: whole-class fallback queries (name="") were removed here. On AH's with a
+	-- large number of distinct items (e.g. Ascension), a whole-class query pages through
+	-- every auction of that class and holds every unique item hit in memory at once,
+	-- which can spike the 32-bit client's memory enough to hard-crash it with no Lua error.
 	local queries, combinedQueries = {}, {}
 	for filterName, items in pairs(filters) do
 		for _, query in ipairs(GetCommonQueryInfo(filterName, items)) do
@@ -280,14 +258,7 @@ local function GenerateQueriesThread(self)
 			end
 		end
 	end
-	for class, items in pairs(itemClasses) do
-		for _, query in ipairs(GetCommonQueryInfoClass(class, items)) do
-			if #query.items > 1 then
-				tinsert(combinedQueries, query)
-			end
-		end
-	end
-	
+
 	private.isScanning = true
 	private.queries = queries
 	private.combinedQueries = combinedQueries

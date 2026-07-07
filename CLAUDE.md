@@ -146,3 +146,18 @@ Shopping search result received
 
 **TradeSkillMaster_AuctionDB/TradeSkillMaster_AuctionDB.lua** (continued 2026-06-11)
 - Added `Sell (farm)` section below Vendor profit. Shows net gain over vendoring at 6 price targets: 50%, 65%, 80%, 95% of DBMarket, exact DBMarket, and DBMinBuyout. Formula: `sellNet = floor(price * 0.95) - deposit48h - vendorSellPrice`. Color: green if `sellNet > 0`, yellow if `>= -10c`, red if `< -10c`. Each label shows the target sell price in gray (e.g. `Sell 65% (4g 50s):`). Rendered inside the `if vendorSellPrice > 0` block so deposit and vendor baseline are always available.
+
+### 2026-07-07
+
+**`TradeSkillMaster_Auctioning/modules/ResetScan.lua`**
+- Fixed `Reset:BuyAuction` and the Reset-tab cancel handler both registering `TSM_AH_EVENTS` with `Reset.RemoveCurrentAuction` (a function reference) instead of the string `"RemoveCurrentAuction"`. AceEvent calls function-reference message handlers with no `self` prepended, so `self` inside `RemoveCurrentAuction` was bound to the event name string, making `self:UnregisterMessage(...)` error out immediately and abort before the bought/canceled auction's row was ever removed from `scanData`/`auctionST`.
+- **Why**: this was the root cause of "Auction not found. Skipped." repeating forever after a successful buyout in the Reset tab — the just-bought auction was never cleared from local state, so every subsequent buyout attempt re-validated against stale (already-sold) data and failed, requiring a full AH close/reopen to recover.
+
+**`TradeSkillMaster_Auctioning/modules/ScanUtil.lua`**
+- `Scan:ProcessItem` now always stores the scanned `auctionItem` in `Scan.auctionData[itemString]`, even when it has zero auction records.
+- **Why**: previously an item was only stored when `#auctionItem.records > 0`. When posting an item with no competing auctions currently listed (common for niche/new items), `Scan.auctionData[itemString]` was never populated, so `GUI.lua`'s `UpdateAuctionsSTData` (`isCurrentItem` lookup) found nothing and the item's row vanished from the Manage tab mid-post even though posting was proceeding normally in the background.
+
+**`TradeSkillMaster/Auction/AuctionQueryUtil.lua`**
+- Removed the whole-item-class fallback query path (`GetCommonQueryInfoClass`, the `itemClasses` grouping, and the loop that added class-wide `name=""` queries to `combinedQueries`) from `GenerateQueriesThread`.
+- **Why**: likely root cause of wow.exe hard-crashing (no Lua error) when scanning many items at once in Auctioning. When the query grouper estimated that searching an entire item class was cheaper (fewer pages) than searching per-item, it would issue a `name=""` query that pages through every auction of that whole class. On Ascension's high-volume/custom-item AH, this can pull thousands of distinct items with full auction records into `AuctionScanning.lua`'s `private.data` at once, which is enough to exceed the 32-bit client's memory ceiling and crash it outright rather than throw a catchable Lua error. Removing the fallback means more individual/small-group queries but bounds memory to the actual scanned item list.
+- **Not yet confirmed**: no crash log/BugSack output was available to verify this was the exact trigger — user is testing in-game to confirm the crash is resolved.

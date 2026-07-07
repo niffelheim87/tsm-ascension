@@ -90,10 +90,8 @@ function Scan:ProcessItem(itemString, auctionItem)
 	auctionItem:SetRecordParams({"GetItemBuyout", "GetItemDisplayedBid", "seller", "count"})
 	auctionItem:PopulateCompactRecords()
 	auctionItem:SetAlts(TSM.db.realm.player)
-	if #auctionItem.records > 0 then
-		auctionItem:SetMarketValue(TSMAPI:GetItemValue(itemString, "DBMarket"))
-		Scan.auctionData[itemString] = auctionItem
-	end
+	auctionItem:SetMarketValue(TSMAPI:GetItemValue(itemString, "DBMarket"))
+	Scan.auctionData[itemString] = auctionItem
 end
 
 function Scan:ShouldIgnoreAuction(record, operation)

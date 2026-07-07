@@ -194,7 +194,7 @@ function Reset:CreateResetButtons(parent)
 		end
 		self.auction = nil
 		self:Disable()
-		Reset:RegisterMessage("TSM_AH_EVENTS", Reset.RemoveCurrentAuction)
+		Reset:RegisterMessage("TSM_AH_EVENTS", "RemoveCurrentAuction")
 		TSMAPI:WaitForAuctionEvents("Cancel")
 	end
 	
@@ -702,7 +702,7 @@ function Reset:BuyAuction()
 	resetButtons.buyout:Disable()
 	if foundAuction then
 		-- wait for all the events that are triggered by this action
-		Reset:RegisterMessage("TSM_AH_EVENTS", Reset.RemoveCurrentAuction)
+		Reset:RegisterMessage("TSM_AH_EVENTS", "RemoveCurrentAuction")
 		TSMAPI:WaitForAuctionEvents("Buyout")
 	else
 		TSM:Print(L["Auction not found. Skipped."])
