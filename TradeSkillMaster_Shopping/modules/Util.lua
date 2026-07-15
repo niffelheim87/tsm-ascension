@@ -187,6 +187,7 @@ end
 function private:PrepareForScan(callback, isLastPageScan)
 	TSMAPI:CancelFrame("shoppingRestartSniper")
 	TSMAPI.AuctionScan:StopScan()
+	TSMAPI.AuctionScan:ClearCache() -- release previous search's cached auction records before starting the next one
 	private.searchItem = nil
 	private.isLastPageScan = isLastPageScan
 	private.callback = callback
